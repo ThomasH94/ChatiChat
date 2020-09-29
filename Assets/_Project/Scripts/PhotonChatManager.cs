@@ -20,10 +20,9 @@ namespace ChatiChat.Managers
         #region Messaging
         [SerializeField] private TMP_InputField chatTMPField = null;
         [SerializeField] private TMP_Text chatDisplayTMP = null;
-        #endregion
-        
         private string _privateRecipient = "";
         private string _currentMessage;
+        #endregion
 
         // TODO: Move the Join Chat section to a separate class and communicate with the Chat Manager to verify users
         #region UI
@@ -38,26 +37,6 @@ namespace ChatiChat.Managers
                 _chatClient.Service();
 
             ValidateMessage();
-        }
-
-        private void ValidateMessage()
-        {
-            //Verify chat messages aren't blank before sending
-            if (chatTMPField.text != "" && Input.GetKeyDown(KeyCode.Return))
-            {
-                OnSubmitPublicMessage();
-                OnSubmitPrivateMessage();
-            }
-        }
-
-        public void OnChatValueChanged(string message)
-        {
-            _currentMessage = message;
-        }
-
-        public void OnUsernameValueChanged(string valueIn)
-        {
-            username = valueIn;
         }
 
         #region Setup
@@ -84,6 +63,31 @@ namespace ChatiChat.Managers
         #endregion
 
         #region Messaging
+        public void OnUsernameValueChanged(string valueIn)
+        {
+            username = valueIn;
+        }
+        
+        public void OnChatValueChanged(string message)
+        {
+            _currentMessage = message;
+        }
+
+        public void OnRecipientValueChanged(string recipient)
+        {
+            _privateRecipient = recipient;
+        }
+        
+        private void ValidateMessage()
+        {
+            //Verify chat messages aren't blank before sending
+            if (chatTMPField.text != "" && Input.GetKeyDown(KeyCode.Return))
+            {
+                OnSubmitPublicMessage();
+                OnSubmitPrivateMessage();
+            }
+        }
+        
         public void OnSubmitPublicMessage()
         {
             if (_privateRecipient == "")
@@ -97,7 +101,14 @@ namespace ChatiChat.Managers
 
         public void OnSubmitPrivateMessage()
         {
-            
+            // TODO: Create one SubmitMessage() method or clean up the current SubmitMessage() methods and
+            // verify that the recipient exists
+            if (_privateRecipient != "")
+            {
+                _chatClient.SendPrivateMessage(_privateRecipient, _currentMessage);
+                chatTMPField.text = "";
+                _currentMessage = "";
+            }
         }
         #endregion
 
@@ -145,12 +156,18 @@ namespace ChatiChat.Managers
 
         public void OnPrivateMessage(string sender, object message, string channelName)
         {
+            string messagesToDisplay = "";
 
+            messagesToDisplay = $"(Private) {sender}: {message}";
+            chatDisplayTMP.text += "\n " + messagesToDisplay;
+                
+            Debug.Log(messagesToDisplay);
         }
 
         public void OnSubscribed(string[] channels, bool[] results)
         {
             chatRoom.SetActive(true);
+            // TODO: Let's create a public message from the system like "{x} joined the chat room!"
         }
 
         public void OnUnsubscribed(string[] channels)
